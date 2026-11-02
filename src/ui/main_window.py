@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFrame, QGridLayout,
-    QScrollArea, QMessageBox
+    QScrollArea, QMessageBox, QSizePolicy
 )
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 import qtawesome as qta
+
 from src.services.weather_service import WeatherService
 from src.utils.weather_parser import parse_weather_data
 from src.models.weather import WeatherData
@@ -28,6 +29,7 @@ class WeatherWorker(QThread):
         except Exception as e:
             self.error.emit(str(e))
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -45,12 +47,13 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
 
-        
+        # Header
         header = QLabel("وضعیت آب و هوا")
         header.setFont(QFont("Segoe UI", 22, QFont.Bold))
         header.setAlignment(Qt.AlignCenter)
         layout.addWidget(header)
 
+        # Search
         search_layout = QHBoxLayout()
         self.city_input = QLineEdit()
         self.city_input.setPlaceholderText("نام شهر را وارد کنید (مثال: تهران)")
@@ -66,6 +69,7 @@ class MainWindow(QMainWindow):
         search_layout.addWidget(search_btn)
         layout.addLayout(search_layout)
 
+        # Current weather
         self.current_frame = QFrame()
         self.current_frame.setFrameShape(QFrame.StyledPanel)
         current_layout = QGridLayout(self.current_frame)
@@ -100,11 +104,12 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.current_frame)
 
-        # Forecast section
+        # Forecast title
         forecast_title = QLabel("پیش‌بینی ۵ روز آینده")
         forecast_title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         layout.addWidget(forecast_title)
 
+        # Forecast cards
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -112,15 +117,19 @@ class MainWindow(QMainWindow):
         self.forecast_container = QWidget()
         self.forecast_layout = QHBoxLayout(self.forecast_container)
         self.forecast_layout.setAlignment(Qt.AlignLeft)
+        self.forecast_layout.setSpacing(12)
+        self.forecast_layout.setContentsMargins(5, 5, 5, 5)
         self.scroll.setWidget(self.forecast_container)
 
         layout.addWidget(self.scroll)
 
+        # Status
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignCenter)
         self.status_label.setFont(QFont("Segoe UI", 11))
         layout.addWidget(self.status_label)
 
+        # Footer
         footer = QLabel("Developed by CodeBitForge")
         footer.setAlignment(Qt.AlignCenter)
         footer.setStyleSheet("color: gray; font-size: 11px;")
@@ -172,8 +181,13 @@ class MainWindow(QMainWindow):
         for day in forecast_list:
             frame = QFrame()
             frame.setFrameShape(QFrame.StyledPanel)
-            frame.setFixedWidth(140)
+            frame.setMinimumWidth(130)
+            frame.setMaximumWidth(160)
+            frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
             v_layout = QVBoxLayout(frame)
+            v_layout.setContentsMargins(10, 12, 10, 12)
+            v_layout.setSpacing(8)
 
             day_label = QLabel(f"{day.day_name}\n{day.date[5:]}")
             day_label.setAlignment(Qt.AlignCenter)
