@@ -47,13 +47,13 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
 
-        # Header
+        
         header = QLabel("وضعیت آب و هوا")
         header.setFont(QFont("Segoe UI", 22, QFont.Bold))
         header.setAlignment(Qt.AlignCenter)
         layout.addWidget(header)
 
-        # Search
+        
         search_layout = QHBoxLayout()
         self.city_input = QLineEdit()
         self.city_input.setPlaceholderText("نام شهر را وارد کنید (مثال: تهران)")
@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         search_layout.addWidget(search_btn)
         layout.addLayout(search_layout)
 
-        # Current weather
+        
         self.current_frame = QFrame()
         self.current_frame.setFrameShape(QFrame.StyledPanel)
         current_layout = QGridLayout(self.current_frame)
@@ -104,12 +104,11 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.current_frame)
 
-        # Forecast title
+        
         forecast_title = QLabel("پیش‌بینی ۵ روز آینده")
         forecast_title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         layout.addWidget(forecast_title)
 
-        # Forecast cards
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -123,13 +122,12 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.scroll)
 
-        # Status
+        
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignCenter)
         self.status_label.setFont(QFont("Segoe UI", 11))
         layout.addWidget(self.status_label)
 
-        # Footer
         footer = QLabel("Developed by CodeBitForge")
         footer.setAlignment(Qt.AlignCenter)
         footer.setStyleSheet("color: gray; font-size: 11px;")
@@ -143,6 +141,7 @@ class MainWindow(QMainWindow):
 
         self.status_label.setText("در حال دریافت اطلاعات...")
         self.city_input.setEnabled(False)
+        self.city_input.setPlaceholderText("لطفاً صبر کنید...")
 
         self.worker = WeatherWorker(city)
         self.worker.finished.connect(self.on_weather_received)
@@ -151,13 +150,28 @@ class MainWindow(QMainWindow):
 
     def on_weather_received(self, weather: WeatherData):
         self.city_input.setEnabled(True)
+        self.city_input.setPlaceholderText("نام شهر را وارد کنید (مثال: تهران)")
         self.status_label.setText("")
         self.display_current(weather.current)
         self.display_forecast(weather.forecast)
+        
 
     def on_error(self, message: str):
         self.city_input.setEnabled(True)
-        self.status_label.setText(f"خطا: {message}")
+        self.city_input.setPlaceholderText("نام شهر را وارد کنید (مثال: تهران)")
+        if "404" in message or "city not found" in message.lower():
+            text = "شهر مورد نظر پیدا نشد"
+        elif "401" in message or "Invalid API key" in message:
+            text = "کلید API نامعتبر است"
+        elif "timeout" in message.lower() or "timed out" in message.lower():
+            text = "زمان درخواست به پایان رسید. دوباره تلاش کنید"
+        elif "connection" in message.lower() or "network" in message.lower():
+            text = "اتصال به اینترنت برقرار نیست"
+        else:
+            text = "خطایی رخ داد. لطفاً دوباره تلاش کنید"
+
+        self.status_label.setText(text)
+        
 
     def display_current(self, current):
         self.city_label.setText(f"شهر: {current.city}, {current.country}")
