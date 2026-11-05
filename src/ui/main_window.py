@@ -6,7 +6,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 import qtawesome as qta
-
 from src.services.weather_service import WeatherService
 from src.utils.weather_parser import parse_weather_data
 from src.models.weather import WeatherData
@@ -53,23 +52,22 @@ class MainWindow(QMainWindow):
         header.setAlignment(Qt.AlignCenter)
         layout.addWidget(header)
 
-        
         search_layout = QHBoxLayout()
         self.city_input = QLineEdit()
         self.city_input.setPlaceholderText("نام شهر را وارد کنید (مثال: تهران)")
         self.city_input.setFont(QFont("Segoe UI", 12))
         self.city_input.returnPressed.connect(self.search_weather)
 
-        search_btn = QPushButton("جستجو")
-        search_btn.setIcon(qta.icon("fa5s.search"))
-        search_btn.setFixedWidth(120)
-        search_btn.clicked.connect(self.search_weather)
+        self.search_btn = QPushButton("جستجو")
+        self.search_btn.setIcon(qta.icon("fa5s.search"))
+        self.search_btn.setFixedWidth(120)
+        self.search_btn.clicked.connect(self.search_weather)
 
         search_layout.addWidget(self.city_input)
-        search_layout.addWidget(search_btn)
+        search_layout.addWidget(self.search_btn)
         layout.addLayout(search_layout)
 
-        
+
         self.current_frame = QFrame()
         self.current_frame.setFrameShape(QFrame.StyledPanel)
         current_layout = QGridLayout(self.current_frame)
@@ -104,7 +102,7 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.current_frame)
 
-        
+
         forecast_title = QLabel("پیش‌بینی ۵ روز آینده")
         forecast_title.setFont(QFont("Segoe UI", 16, QFont.Bold))
         layout.addWidget(forecast_title)
@@ -122,7 +120,6 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.scroll)
 
-        
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignCenter)
         self.status_label.setFont(QFont("Segoe UI", 11))
@@ -141,7 +138,25 @@ class MainWindow(QMainWindow):
 
         self.status_label.setText("در حال دریافت اطلاعات...")
         self.city_input.setEnabled(False)
+        self.search_btn.setEnabled(False)
         self.city_input.setPlaceholderText("لطفاً صبر کنید...")
+
+
+        self.city_label.setText("شهر: -")
+        self.temp_label.setText("دما: -")
+        self.feels_label.setText("احساس می‌شود: -")
+        self.desc_label.setText("وضعیت: -")
+        self.humidity_label.setText("رطوبت: -")
+        self.wind_label.setText("باد: -")
+        self.sunrise_label.setText("طلوع: -")
+        self.sunset_label.setText("غروب: -")
+        self.icon_label.clear()
+
+
+        while self.forecast_layout.count():
+            item = self.forecast_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
 
         self.worker = WeatherWorker(city)
         self.worker.finished.connect(self.on_weather_received)
@@ -150,15 +165,17 @@ class MainWindow(QMainWindow):
 
     def on_weather_received(self, weather: WeatherData):
         self.city_input.setEnabled(True)
+        self.search_btn.setEnabled(True)
         self.city_input.setPlaceholderText("نام شهر را وارد کنید (مثال: تهران)")
         self.status_label.setText("")
         self.display_current(weather.current)
         self.display_forecast(weather.forecast)
-        
 
     def on_error(self, message: str):
         self.city_input.setEnabled(True)
+        self.search_btn.setEnabled(True)
         self.city_input.setPlaceholderText("نام شهر را وارد کنید (مثال: تهران)")
+
         if "404" in message or "city not found" in message.lower():
             text = "شهر مورد نظر پیدا نشد"
         elif "401" in message or "Invalid API key" in message:
@@ -171,7 +188,6 @@ class MainWindow(QMainWindow):
             text = "خطایی رخ داد. لطفاً دوباره تلاش کنید"
 
         self.status_label.setText(text)
-        
 
     def display_current(self, current):
         self.city_label.setText(f"شهر: {current.city}, {current.country}")
